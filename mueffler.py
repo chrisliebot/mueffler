@@ -4,15 +4,44 @@ import json
 import http.server
 import subprocess
 
+def translate_arguments(arguments, argument_map):
+    arg_list = []
+    for arg in arguments.keys():
+        if not arg in argument_map:
+            continue
+        arg_list.extend(argument_map[arg](arguments[arg]))
+    return arg_list
+
+def single(name):
+    return lambda x: ['{}={}'.format(name, x)]
+
+def multi(name):
+    return lambda xs: ['{}={}'.format(name, x) for x in xs]
+
+def flag(name):
+    return lambda cond: [name] if cond else []
+
 class MuefflerHandler(http.server.BaseHTTPRequestHandler):
     def echo(**args):
         return args
     
-    def mueval(expression):
-        assert expression != None
+    def mueval(**args):
+        argument_map = {
+            'expression': single('--expression'),
+            'timeLimit': single('--time-limit'),
+            'loadFile': single('--load-file'),
+            'modules': multi('--module'),
+            'extensions': flag('--Extensions'),
+            'inferredType': flag('--inferred-type'),
+            'typeOnly': flag('--type-only'),
+            'resourceLimits': flag('--resource-limits'),
+            'packageTrust': flag('--package-trust'),
+            'trust': multi('--trust')
+            # Not included: --password and --help
+        }
 
         completed_proc = subprocess.run(
-            [ "mueval", "--expression", expression ],
+            [ "mueval" ] + translate_arguments(args, argument_map),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
         )
