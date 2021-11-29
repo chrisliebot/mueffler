@@ -1,9 +1,7 @@
 FROM debian:bullseye
 
-RUN apt-get update
-
 # cabal and mueval
-RUN apt-get install -y cabal-install && apt-get clean
+RUN apt-get update && apt-get install -y cabal-install && apt-get clean
 RUN cabal update
 # Runtime dependencies which aren't installed along with mueval itself
 RUN cabal install --lib containers mtl hint random show simple-reflect QuickCheck
